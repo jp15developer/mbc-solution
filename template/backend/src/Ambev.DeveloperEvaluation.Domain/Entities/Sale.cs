@@ -82,6 +82,12 @@ public class Sale : BaseEntity
 
 public class SaleItem
 {
+    private const int FirstDiscountTierQuantity = 4;
+    private const int SecondDiscountTierQuantity = 10;
+    private const int MaximumQuantity = 20;
+    private const decimal FirstDiscountTierPercentage = 0.10m;
+    private const decimal SecondDiscountTierPercentage = 0.20m;
+
     public Guid ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
     public int Quantity { get; set; }
@@ -106,12 +112,23 @@ public class SaleItem
             return;
         }
 
-        if (Quantity > 20)
+        if (Quantity > MaximumQuantity)
             throw new DomainException("It's not possible to sell above 20 identical items.");
 
-        DiscountPercentage = Quantity >= 10 ? 0.20m : Quantity >= 4 ? 0.10m : 0m;
+        DiscountPercentage = CalculateDiscountPercentage();
 
         var subtotal = UnitPrice * Quantity;
         TotalAmount = subtotal - (subtotal * DiscountPercentage);
+    }
+
+    private decimal CalculateDiscountPercentage()
+    {
+        if (Quantity >= SecondDiscountTierQuantity)
+            return SecondDiscountTierPercentage;
+
+        if (Quantity >= FirstDiscountTierQuantity)
+            return FirstDiscountTierPercentage;
+
+        return 0m;
     }
 }

@@ -26,7 +26,12 @@ public class CreateSaleCommandValidator : AbstractValidator<CreateSaleCommand>
 
         RuleFor(x => x.Items)
             .NotNull()
-            .NotEmpty();
+            .NotEmpty()
+            .Must(items => items
+                .Select(i => i.ProductId)
+                .Distinct()
+                .Count() == items.Count)
+            .WithMessage("Duplicated products are not allowed. Consolidate quantities by product.");
 
         RuleForEach(x => x.Items)
             .ChildRules(item =>

@@ -1,4 +1,5 @@
 using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Events;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using AutoMapper;
 using FluentValidation;
@@ -46,16 +47,23 @@ public class UpdateSaleHandler : IRequestHandler<UpdateSaleCommand, UpdateSaleRe
         foreach (var cancelledItemProductId in request.CancelledItemProductIds)
         {
             sale.CancelItem(cancelledItemProductId);
+            var itemCancelledEvent = new ItemCancelledEvent(sale.Id, cancelledItemProductId);
             _logger.LogInformation(
-                "ItemCancelled: SaleId={SaleId}, ProductId={ProductId}",
-                sale.Id,
-                cancelledItemProductId);
+                "{EventName}: SaleId={SaleId}, ProductId={ProductId}",
+                nameof(ItemCancelledEvent),
+                itemCancelledEvent.SaleId,
+                itemCancelledEvent.ProductId);
         }
 
         if (request.IsCancelled && !sale.IsCancelled)
         {
             sale.CancelSale();
-            _logger.LogInformation("SaleCancelled: SaleId={SaleId}, SaleNumber={SaleNumber}", sale.Id, sale.SaleNumber);
+            var saleCancelledEvent = new SaleCancelledEvent(sale);
+            _logger.LogInformation(
+                "{EventName}: SaleId={SaleId}, SaleNumber={SaleNumber}",
+                nameof(SaleCancelledEvent),
+                saleCancelledEvent.Sale.Id,
+                saleCancelledEvent.Sale.SaleNumber);
         }
         else
         {
@@ -64,7 +72,12 @@ public class UpdateSaleHandler : IRequestHandler<UpdateSaleCommand, UpdateSaleRe
 
         var updatedSale = await _saleRepository.UpdateAsync(sale, cancellationToken);
 
-        _logger.LogInformation("SaleModified: SaleId={SaleId}, SaleNumber={SaleNumber}", updatedSale.Id, updatedSale.SaleNumber);
+        var saleModifiedEvent = new SaleModifiedEvent(updatedSale);
+        _logger.LogInformation(
+            "{EventName}: SaleId={SaleId}, SaleNumber={SaleNumber}",
+            nameof(SaleModifiedEvent),
+            saleModifiedEvent.Sale.Id,
+            saleModifiedEvent.Sale.SaleNumber);
 
         return _mapper.Map<UpdateSaleResult>(updatedSale);
     }

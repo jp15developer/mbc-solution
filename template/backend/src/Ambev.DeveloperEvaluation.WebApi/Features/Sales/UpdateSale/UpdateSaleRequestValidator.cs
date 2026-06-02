@@ -29,7 +29,18 @@ public class UpdateSaleRequestValidator : AbstractValidator<UpdateSaleRequest>
 
         RuleFor(x => x.Items)
             .NotNull()
-            .NotEmpty();
+            .NotEmpty()
+            .Must(items => items
+                .Select(i => i.ProductId)
+                .Distinct()
+                .Count() == items.Count)
+            .WithMessage("Duplicated products are not allowed. Consolidate quantities by product.");
+
+        RuleFor(x => x.CancelledItemProductIds)
+            .Must(ids => ids.Distinct().Count() == ids.Count)
+            .WithMessage("Cancelled item product IDs must be unique.")
+            .Must((request, ids) => ids.All(id => request.Items.Any(item => item.ProductId == id)))
+            .WithMessage("Cancelled item product IDs must exist in the sale items list.");
 
         RuleForEach(x => x.Items)
             .ChildRules(item =>

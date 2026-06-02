@@ -1,4 +1,5 @@
 using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Events;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using AutoMapper;
 using FluentValidation;
@@ -34,7 +35,12 @@ public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleRe
 
         var created = await _saleRepository.CreateAsync(sale, cancellationToken);
 
-        _logger.LogInformation("SaleCreated: SaleId={SaleId}, SaleNumber={SaleNumber}", created.Id, created.SaleNumber);
+        var saleCreatedEvent = new SaleCreatedEvent(created);
+        _logger.LogInformation(
+            "{EventName}: SaleId={SaleId}, SaleNumber={SaleNumber}",
+            nameof(SaleCreatedEvent),
+            saleCreatedEvent.Sale.Id,
+            saleCreatedEvent.Sale.SaleNumber);
 
         return _mapper.Map<CreateSaleResult>(created);
     }

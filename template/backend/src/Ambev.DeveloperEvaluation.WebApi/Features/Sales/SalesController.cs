@@ -40,12 +40,13 @@ public class SalesController : BaseController
 
         var command = _mapper.Map<CreateSaleCommand>(request);
         var response = await _mediator.Send(command, cancellationToken);
+        var saleResponse = _mapper.Map<CreateSaleResponse>(response);
 
-        return Created(string.Empty, new ApiResponseWithData<CreateSaleResponse>
+        return CreatedAtAction(nameof(GetSale), new { id = saleResponse.Id }, new ApiResponseWithData<CreateSaleResponse>
         {
             Success = true,
             Message = "Sale created successfully",
-            Data = _mapper.Map<CreateSaleResponse>(response)
+            Data = saleResponse
         });
     }
 
